@@ -12,19 +12,19 @@
     </div>
     
     <div class="p-5 flex align-center">
-        <div class="p-5 m-5 w-[250px] h-[250px] bg-[#1d1d1f] rounded-2xl" id="nyse">
+        <div class="p-5 m-5 w-[250px] h-[250px] bg-[#1d1d1f] rounded-2xl border" id="nyse">
             <img class="m-auto pb-2" src="./image/north-america.png" width="100px" alt="na">
             <h2 class="font-semibold text-xl text-center mb-3" >NYSE (New York)</h2>
             <div class="status text-center text-md font-light italic">Calcul en cours...</div>
             <div class="countdown text-center text-md">Calcul en cours...</div>
         </div>
-        <div class="p-5 m-5 w-[250px] h-[250px] bg-[#1d1d1f] rounded-2xl" id="euronext">
+        <div class="p-5 m-5 w-[250px] h-[250px] bg-[#1d1d1f] rounded-2xl border" id="euronext">
             <img class="m-auto pb-2" src="./image/europe.png" width="100px" alt="eu">
             <h2 class="font-semibold text-xl text-center mb-3" >Euronext (Paris/EU)</h2>
             <div class="status text-center text-md font-light italic">Calcul en cours...</div>
             <div class="countdown text-center text-md">Calcul en cours...</div>
         </div>
-        <div class="p-5 m-5 w-[250px] h-[250px] bg-[#1d1d1f] rounded-2xl" id="tokyo">
+        <div class="p-5 m-5 w-[250px] h-[250px] bg-[#1d1d1f] rounded-2xl border" id="tokyo">
             <img class="m-auto pb-2" src="./image/asia.png" width="100px" alt="as">
             <h2 class="font-semibold text-xl text-center mb-3" >Tokyo Stock Exchange</h2>
             <div class="status text-center text-md font-light italic">Calcul en cours...</div>
@@ -36,117 +36,8 @@
             <div class="countdown text-center text-md font-medium">Chargement en cours...</div>
         </div>
     </div>
-    
-<script>
-async function fetchCryptoIndex() {
-    try {
-        const response = await fetch("https://api.alternative.me/fng/");
-        console.log(response);
-        const data = await response.json();
-        const value = data.data[0].value;
-        const sentiment = data.data[0].value_classification;
 
-        document.querySelector("#crypto-index .countdown").textContent =
-            `${value} (${sentiment})`;
-    } catch (error) {
-        document.querySelector("#crypto-index .countdown").textContent =
-            "Erreur de chargement de l'indice.";
-    }
-}
-
-// Appeler l'API au chargement et actualiser toutes les heures
-fetchCryptoIndex();
-setInterval(fetchCryptoIndex, 60 * 60 * 1000); // Toutes les heures
-
-const bourseSchedules = {
-    nyse: { hours: 9, minutes: 30, timezone: "America/New_York" },
-    euronext: { hours: 9, minutes: 0, timezone: "Europe/Paris" },
-    tokyo: { hours: 9, minutes: 0, timezone: "Asia/Tokyo" }
-};
-
-function calculateTimeToOpen(schedule) {
-    const now = new Date();
-    // Convertir l'heure actuelle dans le fuseau horaire de la bourse
-    const nowInTimezone = new Date(
-        now.toLocaleString("en-US", { timeZone: schedule.timezone })
-    );
-
-    // Créer une date cible pour l'ouverture
-    const target = new Date(nowInTimezone);
-    target.setHours(schedule.hours, schedule.minutes, 0, 0);
-
-    // Si l'heure actuelle dépasse l'heure cible, passer au lendemain
-    if (nowInTimezone > target) {
-        target.setDate(target.getDate() + 1);
-    }
-
-    // Retourner la différence en millisecondes
-    return target - nowInTimezone;
-}
-
-function calculateTimeToClose(schedule) {
-    const now = new Date();
-    // Convertir l'heure actuelle dans le fuseau horaire de la bourse
-    const nowInTimezone = new Date(
-        now.toLocaleString("en-US", { timeZone: schedule.timezone })
-    );
-
-    // Créer une date cible pour la fermeture (17h)
-    const closeTime = new Date(nowInTimezone);
-    closeTime.setHours(17, 0, 0, 0); // Heure de fermeture à 17h
-
-    // Si l'heure actuelle est après l'heure de fermeture, passer au lendemain
-    if (nowInTimezone > closeTime) {
-        closeTime.setDate(closeTime.getDate() + 1);
-    }
-
-    // Retourner la différence en millisecondes
-    return closeTime - nowInTimezone;
-}
-
-function updateCountdown() {
-    Object.keys(bourseSchedules).forEach(bourse => {
-        const schedule = bourseSchedules[bourse];
-        const timeToOpen = calculateTimeToOpen(schedule);
-        const timeToClose = calculateTimeToClose(schedule);
-
-        const now = new Date();
-        // Convertir l'heure actuelle dans le fuseau horaire de la bourse
-        const nowInTimezone = new Date(
-            now.toLocaleString("en-US", { timeZone: schedule.timezone })
-        );
-
-        let hours, minutes, seconds, statusMessage, timeToEvent;
-
-        // Vérifier si le marché est ouvert ou fermé
-        if (nowInTimezone.getHours() >= schedule.hours && nowInTimezone.getMinutes() >= schedule.minutes &&
-            nowInTimezone.getHours() < 17) {
-            // Marché ouvert
-            hours = Math.floor((timeToClose / (1000 * 60 * 60)) % 24);
-            minutes = Math.floor((timeToClose / (1000 * 60)) % 60);
-            seconds = Math.floor((timeToClose / 1000) % 60);
-            statusMessage = "Le marché est ouvert.";
-            timeToEvent = "Ferme dans : ";
-        } else {
-            // Marché fermé
-            hours = Math.floor((timeToOpen / (1000 * 60 * 60)) % 24);
-            minutes = Math.floor((timeToOpen / (1000 * 60)) % 60);
-            seconds = Math.floor((timeToOpen / 1000) % 60);
-            statusMessage = "Le marché est fermé.";
-            timeToEvent = "Ouvre dans : ";
-        }
-
-         // Mettre à jour l'affichage
-         document.querySelector(`#${bourse} .countdown`).textContent =
-            `${timeToEvent} ${hours}h ${minutes}m ${seconds}s`;
-        document.querySelector(`#${bourse} .status`).textContent =
-        `${statusMessage}`;
-
-    });
-}
-
-setInterval(updateCountdown, 1000); // Mettre à jour chaque seconde.
-
-    </script>
+<script src="./js/FnGIndex.js"></script>
+<script src="./js/marketTime.js"></script>
 </body>
 </html>
